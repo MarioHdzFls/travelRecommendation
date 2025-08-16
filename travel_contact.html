@@ -1,34 +1,41 @@
-<!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contáctanos - Travel Recommendations</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="travel_recommendation.css">
 </head>
 <body>
 
     <header>
-        <nav class="simple-nav">
-            <a href="travel_recommendation.html">Inicio</a>
-            <a href="about.html">Acerca de nosotros</a>
-            <a href="contact.html">Contáctanos</a>
+        <div class="logo">
+            <a href="travel_recommendation.html">✈️ MBK Travel Recommendations</a>
+        </div>
+        <nav class="main-nav">
+            <ul>
+                <li><a href="travel_recommendation.html">Home</a></li>
+                <li><a href="travel_about.html">About Us</a></li>
+                <li><a href="travel_contact.html">Contact Us</a></li>
+            </ul>
         </nav>
+        <div class="search-bar">
+            <input type="text" id="search-input" placeholder="Search for beach, church or country">
+            <button id="search-btn">Search</button>
+            <button id="reset-btn">Clear</button>
+        </div>
     </header>
 
     <main class="contact-page">
-        <h1>Contáctanos</h1>
+        <h1>Contact Us</h1>
         <form action="#" method="post">
-            <label for="name">Nombre:</label>
+            <label for="name">Name:</label>
             <input type="text" id="name" name="name" required>
 
-            <label for="email">Correo electrónico:</label>
+            <label for="email">Email:</label>
             <input type="email" id="email" name="email" required>
 
-            <label for="message">Mensaje:</label>
+            <label for="message">Message:</label>
             <textarea id="message" name="message" rows="5" required></textarea>
 
-            <button type="submit">Enviar</button>
+            <button type="submit">Submit</button>
         </form>
     </main>
 

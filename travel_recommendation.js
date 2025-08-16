@@ -1,42 +1,35 @@
-function fetchAndLogData() {
-    fetch('travel_recommendation_api.json')
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log(data); // Aquí verás los datos en la consola
-        })
-        .catch(error => {
-            console.error('There has been a problem with your fetch operation:', error);
-        });
-}
-
-// Llama a la función para verificar que funciona
-fetchAndLogData();
-
 document.addEventListener('DOMContentLoaded', () => {
     const searchBtn = document.getElementById('search-btn');
     const resetBtn = document.getElementById('reset-btn');
     const searchInput = document.getElementById('search-input');
     const resultsContainer = document.getElementById('results-container');
+    const timeDisplayContainer = document.createElement('div');
+    timeDisplayContainer.className = 'time-display-container';
+    resultsContainer.prepend(timeDisplayContainer);
+    timeDisplayContainer.style.display = 'none';
 
     searchBtn.addEventListener('click', () => {
         const keyword = searchInput.value.toLowerCase().trim();
-        fetch('travel_recommendation_api.json')
-            .then(response => response.json())
-            .then(data => {
-                const results = findRecommendations(data, keyword);
-                displayRecommendations(results, resultsContainer);
-            })
-            .catch(error => console.error('Error fetching data:', error));
+        if (keyword) {
+            fetch('travel_recommendation_api.json')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const results = findRecommendations(data, keyword);
+                    displayRecommendations(results, resultsContainer, timeDisplayContainer);
+                })
+                .catch(error => console.error('Error fetching data:', error));
+        }
     });
 
     resetBtn.addEventListener('click', () => {
-        resultsContainer.innerHTML = ''; // Limpia los resultados
-        searchInput.value = ''; // Limpia el campo de búsqueda
+        resultsContainer.innerHTML = '';
+        searchInput.value = '';
+        timeDisplayContainer.style.display = 'none';
     });
 });
 
@@ -44,13 +37,11 @@ function findRecommendations(data, keyword) {
     let recommendations = [];
     if (keyword.includes('beach') || keyword.includes('playa')) {
         recommendations = data.beaches;
-    } else if (keyword.includes('temple') || keyword.includes('templo')) {
+    } else if (keyword.includes('temple') || keyword.includes('templo') || keyword.includes('church')) {
         recommendations = data.temples;
     } else {
-        // Busca en los países
-        const countryData = data.countries.find(country => 
-            country.name.toLowerCase().includes(keyword) || 
-            keyword.includes(country.name.toLowerCase())
+        const countryData = data.countries.find(country =>
+            country.name.toLowerCase().includes(keyword)
         );
         if (countryData) {
             recommendations = countryData.cities;
@@ -59,46 +50,59 @@ function findRecommendations(data, keyword) {
     return recommendations;
 }
 
-function displayRecommendations(recommendations, container) {
+function displayRecommendations(recommendations, container, timeDisplayContainer) {
+    // 1. Limpiamos los resultados anteriores (esto también elimina el contenedor del tiempo si existía).
     container.innerHTML = '';
+    
+    // 2. Nos aseguramos de que el contenedor de tiempo esté oculto por defecto.
+    timeDisplayContainer.style.display = 'none';
+
     if (recommendations.length > 0) {
+        // 3. Verificamos si el resultado tiene una zona horaria.
+        if (recommendations[0].timeZone) {
+            // 4. ¡AQUÍ ESTÁ LA CORRECCIÓN CLAVE!
+            // Volvemos a añadir el contenedor de la hora al principio del 'container'
+            // en cada búsqueda que lo necesite.
+            container.prepend(timeDisplayContainer);
+            
+            timeDisplayContainer.style.display = 'block';
+            updateTime(timeDisplayContainer, recommendations[0].timeZone);
+        }
+
+        // 5. Creamos y añadimos las tarjetas de recomendación como antes.
         recommendations.forEach(item => {
             const card = document.createElement('div');
             card.className = 'recommendation-card';
             card.innerHTML = `
                 <img src="${item.imageUrl}" alt="${item.name}">
-                <h3>${item.name}</h3>
-                <p>${item.description}</p>
-                <div class="time-display"></div>
+                <div class="card-content">
+                    <h3>${item.name}</h3>
+                    <p>${item.description}</p>
+                    <a href="#" class="visit-btn">Visit</a>
+                </div>
             `;
             container.appendChild(card);
-            
-            // Tarea 10: Mostrar la hora
-            if (item.timeZone) {
-                updateTime(card.querySelector('.time-display'), item.timeZone);
-            }
         });
     } else {
         container.innerHTML = '<p>No se encontraron recomendaciones para tu búsqueda.</p>';
     }
 }
 
-resetBtn.addEventListener('click', () => {
-    resultsContainer.innerHTML = ''; // Limpia los resultados
-    searchInput.value = ''; // Limpia el campo de búsqueda
-});
-
 function updateTime(element, timeZone) {
     const options = {
         timeZone: timeZone,
         hour: 'numeric',
         minute: 'numeric',
-        second: 'numeric'
+        second: 'numeric',
+        hour12: true
     };
     
-    // Función que se ejecuta cada segundo para actualizar la hora
-    setInterval(() => {
-        const currentTime = new Date().toLocaleTimeString('es-ES', options);
-        element.textContent = `Hora actual: ${currentTime}`;
+    if (element.interval) {
+        clearInterval(element.interval);
+    }
+
+    element.interval = setInterval(() => {
+        const currentTime = new Date().toLocaleTimeString('en-US', options);
+        element.textContent = `Current Local Time (${timeZone}): ${currentTime}`;
     }, 1000);
 }
